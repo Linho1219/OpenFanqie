@@ -1,6 +1,6 @@
 # Open Fanqie PDF Export
 
-Browser-side PDF export for SVG pages produced by Open Fanqie. Each SVG is rasterized to JPEG and embedded as one PDF page, keeping the SVG page size and orientation. Open Fanqie's four A4/A5 presets map to their exact physical paper sizes; other SVG dimensions fall back to the standard 96 CSS px/in to 72 PDF pt/in conversion.
+Browser-side PDF export helpers for SVG pages produced by Open Fanqie. The preferred PDF path opens the browser print flow so the SVG notation remains vector. A raster `Blob` path is also available for workflows that need a programmatic PDF file.
 
 ## Installation
 
@@ -9,6 +9,22 @@ pnpm add @openfanqie/export-pdf
 ```
 
 ## Usage
+
+### Vector print flow
+
+```ts
+import { printSvgPagesToPdf } from '@openfanqie/export-pdf'
+
+await printSvgPagesToPdf(svgPages, {
+  title: 'score-name',
+})
+```
+
+`printSvgPagesToPdf` renders the SVG pages into an isolated print frame and calls the browser print dialog. This keeps Open Fanqie's path-based notation glyphs as vectors and lets the browser handle text fonts while producing the PDF. Browsers do not expose their "Save as PDF" result to page scripts, so this API resolves after opening the print flow and does not return a `Blob`.
+
+The print page size is derived from the SVG dimensions. Open Fanqie's A4/A5 presets map to their exact physical paper sizes; other SVG dimensions use the standard 96 CSS px/in to 72 PDF pt/in conversion.
+
+### Raster Blob flow
 
 ```ts
 import { svgPagesToPdf } from '@openfanqie/export-pdf'
