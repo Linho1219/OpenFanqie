@@ -465,22 +465,33 @@ function downSvg(num) {
 function exportPdf(button) {
   var session = exportWindowSession
   button.disabled = true
-  button.value = 'PDF生成中，请稍等...'
+  button.value = '正在打开打印窗口，请稍等...'
   waitForExportPaint()
     .then(getExportPages)
     .then(function (result) {
       if (!isCurrentExportWindowSession(session)) return null
+      if (typeof result.exporter.printPdf == 'function') {
+        return result.exporter
+          .printPdf(result.pages, {
+            title: getExportName(),
+          })
+          .then(function () {
+            return null
+          })
+      }
       return result.exporter.exportPdf(result.pages)
     })
     .then(function (blob) {
-      if (!blob || !isCurrentExportWindowSession(session)) return
-      downloadBlob(blob, getExportName() + '.pdf')
+      if (!isCurrentExportWindowSession(session)) return
+      if (blob) {
+        downloadBlob(blob, getExportName() + '.pdf')
+      }
       winClose()
     })
     .catch(function (error) {
       if (!isCurrentExportWindowSession(session)) return
       button.disabled = false
-      button.value = '我知道了，导出PDF文档'
+      button.value = '我知道了，打开打印窗口'
       exportFailed('导出PDF', error)
     })
 }
