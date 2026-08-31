@@ -646,6 +646,26 @@ Q2: 6 - - - | 7 - - - :|| 1' - - - | 2 - - - |
     expect(chained).not.toContain(',106 C')
   })
 
+  it('lifts slurs for every additional high octave dot', () => {
+    const svg = render(`Q: (1 2) (1' 2') (1'' 2'') (1''' 2''') (1'''' 2'''')`)
+    const tops = [...svg.matchAll(/<path d="M [^,]+,([^ ]+) C/g)].map((match) => Number(match[1]))
+
+    expect(tops).toEqual([114, 109, 101, 93, 85])
+  })
+
+  it('spaces ordinary high octave dots at the legacy eight-pixel pitch', () => {
+    const svg = render(`Q: 1'''' 2,,,`)
+    const highDots = [...svg.matchAll(/<use x="83" y="([^"]+)" xlink:href="#yingao_gao"/g)].map(
+      (match) => Number(match[1]),
+    )
+    const lowDots = [...svg.matchAll(/<use x="120.5" y="([^"]+)" xlink:href="#yingao_di"/g)].map(
+      (match) => Number(match[1]),
+    )
+
+    expect(highDots).toEqual([130, 122, 114, 106])
+    expect(lowDots).toEqual([131, 137, 143])
+  })
+
   it('matches legacy dynamics, hairpins, and volta positioning', () => {
     const svg = render(`
 Q: 1&f 2 |

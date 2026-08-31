@@ -330,7 +330,7 @@ function ornamentPosition(
     }
     return { x, y: y - 3 - ornament.level * 6 }
   }
-  if (['zkh', 'ykh', 'cy', 'tr', 'yc', 'ycy', 'shy', 'xhy'].includes(ornament.name)) {
+  if (['zkh', 'ykh', 'cy', 'tr', 'yc', 'ycy', 'shy', 'xhy', 'sby', 'xby'].includes(ornament.name)) {
     return { x, y }
   }
   if (ornament.name === 'bc') return { x, y: y - 17 - ornament.level * 6 }
@@ -427,7 +427,7 @@ function renderNote(
     const dotId = note.octave >= 0 ? 'yingao_gao' : 'yingao_di'
     const underlineCount = Math.max(0, Math.log2(note.duration / 4))
     for (let octave = 0; octave < Math.abs(note.octave); octave += 1) {
-      const octaveY = note.octave > 0 ? y - octave * 6 : y + 1 + underlineCount * 4 + octave * 6
+      const octaveY = note.octave > 0 ? y - octave * 8 : y + 1 + underlineCount * 4 + octave * 6
       output.push(registry.use(dotId, x + (note.pitch === 4 ? 2.5 : 0), octaveY))
     }
     if (note.dots >= 2) output.push(registry.use('fudian2', x, y))
@@ -530,7 +530,7 @@ function renderBarline(
   ]
   barline?.ornaments.forEach((ornament) => {
     const id = barlineOrnamentGlyph(ornament.name)
-    if (id !== undefined) output.push(registry.use(id, x, y - 26))
+    if (id !== undefined) output.push(registry.use(id, x, y))
   })
   if (barline?.temporaryMeter !== undefined) {
     output.push(registry.use('linshi_paihao_fenxian', x + 18, y))
@@ -658,9 +658,13 @@ function renderMark(
       element.ornaments.some(({ name }) => name === 'yc' || name === 'ycy'),
   )
     ? 7
-    : markedElements.some((element) => element.kind === 'note' && element.octave > 0)
-      ? 5
-      : 0
+    : (() => {
+        const highestOctave = Math.max(
+          0,
+          ...markedElements.flatMap((element) => (element.kind === 'note' ? [element.octave] : [])),
+        )
+        return highestOctave === 0 ? 0 : 5 + (highestOctave - 1) * 8
+      })()
   const lift = liftOverride ?? mark.level * 8
   const top = y - 16 - lift - markClearance
   if (mark.type === 'slur' || mark.type === 'tuplet') {
@@ -902,6 +906,7 @@ function renderInlineLayer(
         if (element.annotation !== undefined) {
           output.push(renderInterlinearAnnotation(element.annotation, positioned.x, y, config, 2))
         }
+        output.push(...renderInlineOrnaments(element.ornaments, positioned.x, y, registry))
       }
     })
     layout.barlines.forEach((barline, index) => {
