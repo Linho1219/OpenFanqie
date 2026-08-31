@@ -195,6 +195,39 @@ C2: 一
     expect(svg).not.toContain('<path d="M ')
   })
 
+  it('bottom-aligns the last four author lines with the mode and tempo block', () => {
+    const source = `
+B: 时间都去哪了
+B: 电视剧《老牛家的战争》主题曲
+Z: 第一行
+Z: 第二行
+Z: 第三行
+Z: 第四行
+Z: 第五行
+D: F
+P: 4/4
+J: 80
+Q: 1 |
+`
+    const authors = (svg: string) =>
+      [...svg.matchAll(/<text\b[^>]*\by="([^"]+)"[^>]*>(第[一二三四五]行)<\/text>/g)].map(
+        (match) => ({ text: match[2], y: Number(match[1]) }),
+      )
+
+    expect(authors(render(source))).toEqual([
+      { text: '第五行', y: 226 },
+      { text: '第四行', y: 205 },
+      { text: '第三行', y: 184 },
+      { text: '第二行', y: 163 },
+    ])
+    expect(authors(render(source.replace('J: 80\n', '')))).toEqual([
+      { text: '第五行', y: 196 },
+      { text: '第四行', y: 175 },
+      { text: '第三行', y: 154 },
+      { text: '第二行', y: 133 },
+    ])
+  })
+
   it('renders all meters from the final P header and one tempo of each kind', () => {
     const svg = render(`
 B: 标题
@@ -781,6 +814,14 @@ Q2: (2 - - - | 3) - - - :|| 3 - - - | 0 1 4 - | 6 - - 4/ 3/ | 2 - - 1/ 2/ |
     expect(svg).toMatch(/xlink:href="#kuohu_you_bian"/)
   })
 
+  it('renders reduced ornaments on accompaniment sustains and raises its underlines', () => {
+    const svg = render(`Q: 1 | {bz 3&zkh 2// 2// 3/ 4 -&ykh } 5 |`)
+
+    expect(svg).toContain('x="315.5" y="130" xlink:href="#kuohu_you_bian"')
+    expect(svg).toContain('x1="184.5" y1="141" x2="246.5" y2="141"')
+    expect(svg).toContain('x1="184.5" y1="144" x2="221.5" y2="144"')
+  })
+
   it('emits temporary-voice braces only at visible branch boundaries', () => {
     const rightOnly = render(`Q: 1 2 {dsb 3 4} 5 6 | 7 1 |`)
     const leftOnly = render(`Q: 1 2 | {dsb 3 4} 5 6 |`)
@@ -861,6 +902,24 @@ Q2: (2 - - - | 3) - - - :|| 3 - - - | 0 1 4 - | 6 - - 4/ 3/ | 2 - - 1/ 2/ |
     expect(defs).toContain('<g id="xiaojiexian_fine"')
     expect(defs).toContain('<path')
     expect(defs).not.toContain('<text')
+  })
+
+  it('uses the legacy baselines for mordents and barline navigation marks', () => {
+    const mordents = render(`Q: 1&sby 1&sby+ 2&xby 3&xby+`)
+    const navigationMarks = render(`Q: |&fine |&dc |&ds |&ty |&hs`)
+
+    for (const id of ['boyinfu_shang1', 'boyinfu_shang2', 'boyinfu_xia1', 'boyinfu_xia2']) {
+      expect(mordents).toMatch(new RegExp(`<use x="[^"]+" y="130" xlink:href="#${id}"`))
+    }
+    for (const id of [
+      'xiaojiexian_fine',
+      'xiaojiexian_dc',
+      'xiaojiexian_ds',
+      'xiaojiexian_ty',
+      'xiaojiexian_hs',
+    ]) {
+      expect(navigationMarks).toMatch(new RegExp(`<use x="[^"]+" y="130" xlink:href="#${id}"`))
+    }
   })
 
   it('supports legacy page config, pagination, partial redraws, and custom SVG', () => {

@@ -205,13 +205,13 @@ function renderHeader(
   const infoY = config.marginTop + 96 + titleOffset
   markup.push(...modeHeader(metadata, config, registry, infoY))
   const authorSize = config.lyricFont === 'KaiTi' ? 19 : 16
-  const authorBottomY =
-    config.marginTop + 116 + titleOffset + Math.max(0, metadata.authors.length - 1) * 21
-  ;[...metadata.authors]
+  const authors = metadata.authors.slice(-4)
+  const authorBottomY = infoY + 20 + (metadata.tempos.length > 0 ? 30 : 0)
+  authors
     .map((author, index) => ({ author, index }))
     .reverse()
     .forEach(({ author, index }) => {
-      const authorY = authorBottomY - (metadata.authors.length - 1 - index) * (authorSize + 5)
+      const authorY = authorBottomY - (authors.length - 1 - index) * (authorSize + 5)
       markup.push(
         text(author, config.width - config.marginRight, authorY, {
           font: config.lyricFont,
@@ -917,7 +917,7 @@ function renderInlineLayer(
         ),
       )
     })
-    output.push(...renderUnderlines(layout, y))
+    output.push(...renderUnderlines(layout, layer.role === 'accompaniment' ? y - 2 : y))
     layout.line.marks.forEach((mark) =>
       output.push(...renderMark(mark, layout, y, config, registry)),
     )
