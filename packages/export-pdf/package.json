@@ -1,7 +1,7 @@
 {
   "name": "@openfanqie/export-pdf",
   "version": "0.1.0",
-  "description": "Browser-side PDF export for Open Fanqie SVG pages",
+  "description": "Browser print PDF export for Open Fanqie SVG pages",
   "type": "module",
   "files": [
     "dist"
@@ -34,9 +34,5 @@
   "license": "MIT",
   "engines": {
     "node": ">=20"
-  },
-  "dependencies": {
-    "@openfanqie/export-jpg": "workspace:*",
-    "pdf-lib": "^1.17.1"
   }
 }

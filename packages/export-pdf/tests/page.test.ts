@@ -1,6 +1,37 @@
 import { describe, expect, it } from 'vitest'
 
-import { pdfPageSize } from '../src/page'
+import { pdfPageSize, readSvgDimensions } from '../src/page'
+
+describe('readSvgDimensions', () => {
+  it('reads unitless and pixel dimensions', () => {
+    expect(readSvgDimensions('<svg width="1000" height="1415"></svg>')).toEqual({
+      width: 1000,
+      height: 1415,
+    })
+    expect(readSvgDimensions("<svg height='240px' width='320px'></svg>")).toEqual({
+      width: 320,
+      height: 240,
+    })
+  })
+
+  it('uses the viewBox for relative or omitted dimensions', () => {
+    expect(
+      readSvgDimensions('<svg width="100%" height="100%" viewBox="0 0 840 1193"></svg>'),
+    ).toEqual({ width: 840, height: 1193 })
+    expect(readSvgDimensions('<svg viewBox="-10,-20,200,100"></svg>')).toEqual({
+      width: 200,
+      height: 100,
+    })
+  })
+
+  it('rejects invalid or indeterminate dimensions with clear errors', () => {
+    expect(() => readSvgDimensions('not svg')).toThrow(/<svg> root element/)
+    expect(() => readSvgDimensions('<svg width="100%" height="100%"></svg>')).toThrow(
+      /width and height or a valid viewBox/,
+    )
+    expect(() => readSvgDimensions('<svg viewBox="0 0 0 100"></svg>')).toThrow(/must be positive/)
+  })
+})
 
 describe('pdfPageSize', () => {
   it('maps Open Fanqie presets to physical A-series paper sizes', () => {

@@ -1,22 +1,7 @@
-import { readSvgDimensions, svgToJpeg } from '@openfanqie/export-jpg'
-import { PDFDocument } from 'pdf-lib'
+import { pdfPageSize, readSvgDimensions } from './page'
 
-import { pdfPageSize } from './page'
-
-const DEFAULT_SCALE = 2
-const DEFAULT_QUALITY = 0.92
-const DEFAULT_BACKGROUND = '#ffffff'
 const DEFAULT_PRINT_DELAY = 50
 const PRINT_CLEANUP_DELAY = 60_000
-
-export interface PdfExportOptions {
-  /** Raster pixel multiplier. @default 2 */
-  scale?: number
-  /** JPEG encoder quality from 0 to 1. @default 0.92 */
-  quality?: number
-  /** Canvas color painted behind the SVG. @default '#ffffff' */
-  background?: string
-}
 
 export interface VectorPdfPrintOptions {
   /** Browser print document title. */
@@ -41,30 +26,9 @@ function requirePages(pages: readonly string[]): void {
   })
 }
 
-function finitePositive(value: number, name: string): number {
-  if (!Number.isFinite(value) || value <= 0) {
-    throw new RangeError(`${name} must be a finite positive number.`)
-  }
-  return value
-}
-
 function nonNegativeFinite(value: number, name: string): number {
   if (!Number.isFinite(value) || value < 0) {
     throw new RangeError(`${name} must be a finite non-negative number.`)
-  }
-  return value
-}
-
-function jpegQuality(value: number): number {
-  if (!Number.isFinite(value) || value < 0 || value > 1) {
-    throw new RangeError('quality must be a finite number from 0 to 1.')
-  }
-  return value
-}
-
-function backgroundColor(value: string): string {
-  if (typeof value !== 'string' || value.trim() === '') {
-    throw new TypeError('background must be a non-empty CSS color string.')
   }
   return value
 }
@@ -122,7 +86,7 @@ function buildPrintCss(layouts: readonly PrintPageLayout[]): string {
     )
     .join('\n')
 
-  return `${defaultPageRule}
+  return /* css */ `${defaultPageRule}
 ${pageRules}
 html,
 body {
@@ -247,30 +211,6 @@ function schedulePrintCleanup(iframe: HTMLIFrameElement, printWindow: Window): v
 
   printWindow.addEventListener('afterprint', cleanup, { once: true })
   window.setTimeout(cleanup, PRINT_CLEANUP_DELAY)
-}
-
-export async function svgPagesToPdf(
-  pages: readonly string[],
-  options: PdfExportOptions = {},
-): Promise<Blob> {
-  requirePages(pages)
-
-  const scale = finitePositive(options.scale ?? DEFAULT_SCALE, 'scale')
-  const quality = jpegQuality(options.quality ?? DEFAULT_QUALITY)
-  const background = backgroundColor(options.background ?? DEFAULT_BACKGROUND)
-  const document = await PDFDocument.create()
-
-  for (const svg of pages) {
-    const dimensions = readSvgDimensions(svg)
-    const jpegBlob = await svgToJpeg(svg, { scale, quality, background })
-    const image = await document.embedJpg(await jpegBlob.arrayBuffer())
-    const [width, height] = pdfPageSize(dimensions)
-    const page = document.addPage([width, height])
-    page.drawImage(image, { x: 0, y: 0, width, height })
-  }
-
-  const bytes = await document.save()
-  return new Blob([Uint8Array.from(bytes).buffer], { type: 'application/pdf' })
 }
 
 /**

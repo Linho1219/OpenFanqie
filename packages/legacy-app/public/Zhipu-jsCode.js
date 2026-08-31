@@ -470,22 +470,12 @@ function exportPdf(button) {
     .then(getExportPages)
     .then(function (result) {
       if (!isCurrentExportWindowSession(session)) return null
-      if (typeof result.exporter.printPdf == 'function') {
-        return result.exporter
-          .printPdf(result.pages, {
-            title: getExportName(),
-          })
-          .then(function () {
-            return null
-          })
-      }
-      return result.exporter.exportPdf(result.pages)
+      return result.exporter.printPdf(result.pages, {
+        title: getExportName(),
+      })
     })
-    .then(function (blob) {
+    .then(function () {
       if (!isCurrentExportWindowSession(session)) return
-      if (blob) {
-        downloadBlob(blob, getExportName() + '.pdf')
-      }
       winClose()
     })
     .catch(function (error) {

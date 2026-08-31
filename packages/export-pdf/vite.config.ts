@@ -10,9 +10,6 @@ export default defineConfig({
       fileName: (format) =>
         format === 'es' ? 'open-fanqie-export-pdf.js' : 'open-fanqie-export-pdf.cjs',
     },
-    rollupOptions: {
-      external: ['@openfanqie/export-jpg', 'pdf-lib'],
-    },
   },
   test: {
     coverage: {
